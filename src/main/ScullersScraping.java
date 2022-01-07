@@ -1,11 +1,21 @@
 package main;
+import java.io.IOException;
 import java.util.List;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openqa.selenium.WebDriver;
 
 import pageObjects.ScullersCalendarPage;
+import utility.HttpHelper;
 
 public class ScullersScraping {
 	
@@ -25,34 +35,60 @@ public class ScullersScraping {
 		List<String> dateList = scullersCalendarPage.retrieveCalendarDatesEvents();
 		List<String> titleList = scullersCalendarPage.retrieveCalendarEventTitles();
 		List<String> imageList = scullersCalendarPage.retrieveImageTitles();
+
+		driver.close();
 		
-		
-		JSONArray arrayOfContent = new JSONArray();
+		// reformat date code
 		
 		for (int i = 0; i < dateList.size(); i++) {
 			
-			JSONObject obj = new JSONObject();
+			String string = dateList.get(i);
 			
-			obj.put("date", dateList.get(i));
-			obj.put("title", titleList.get(i));
-			obj.put("image", imageList.get(i));
+			String newString = string.replaceAll("\n", " ");
 			
-			arrayOfContent.put(obj);
+			dateList.set(i, newString);
+			
 		}
 		
 		
-		for (int i = 0; i < arrayOfContent.length(); i++) {
+		// reformat title code
+		
+		for (int i = 0; i < titleList.size(); i++) {
 			
-			System.out.println(arrayOfContent.get(i));
+			String string = titleList.get(i);
+			
+			string = string.replaceAll("\n", " ");
+			
+			String titleLower = string.toLowerCase();
+			
+			String[] titleLowerSplit = titleLower.split(" ");
+			String newTitle = "";
+			
+			for (int j = 0; j < titleLowerSplit.length; j++) {
+				
+				String word = titleLowerSplit[j];
+				
+				word = word.substring(0, 1).toUpperCase() + word.substring(1, word.length());
+				
+				newTitle += word + " ";
+			}
+			
+			newTitle = newTitle.substring(0, newTitle.length() - 1);
+			
+			titleList.set(i, newTitle);
+			
+			
+			
+			
+			
 		}
 		
 		
-	
+		HttpHelper.sendDataToServer(dateList, titleList, imageList, 1);
 		
-		
-		driver.close();
 		
 		
 	}
+
 
 }
